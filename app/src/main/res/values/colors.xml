@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_dark">#FF1E1E1E</color>
+    <color name="controls_bg">#CC2D2D2D</color>
+    <color name="controls_bg_solid">#FF2D2D2D</color>
+    <color name="button_bg">#FF3D3D3D</color>
+    <color name="button_bg_pressed">#FF4D4D4D</color>
+    <color name="button_border">#FF4D4D4D</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFAAAAAA</color>
+    <color name="text_status">#FF888888</color>
+    <color name="accent_blue">#FF4A90D9</color>
+    <color name="accent_green">#FF4CAF50</color>
+    <color name="accent_orange">#FFFF9800</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
+

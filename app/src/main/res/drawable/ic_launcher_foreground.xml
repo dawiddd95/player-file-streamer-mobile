@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Film strip left bar -->
+    <path
+        android:fillColor="#FF4A90D9"
+        android:pathData="M28,26 L34,26 L34,82 L28,82 Z" />
+    <!-- Film strip holes left -->
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,30 L33,30 L33,34 L29,34 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,38 L33,38 L33,42 L29,42 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,46 L33,46 L33,50 L29,50 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,54 L33,54 L33,58 L29,58 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,62 L33,62 L33,66 L29,66 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M29,70 L33,70 L33,74 L29,74 Z" />
+
+    <!-- Film strip right bar -->
+    <path
+        android:fillColor="#FF4A90D9"
+        android:pathData="M62,26 L68,26 L68,82 L62,82 Z" />
+    <!-- Film strip holes right -->
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,30 L67,30 L67,34 L63,34 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,38 L67,38 L67,42 L63,42 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,46 L67,46 L67,50 L63,50 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,54 L67,54 L67,58 L63,58 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,62 L67,62 L67,66 L63,66 Z" />
+    <path
+        android:fillColor="#FF1E1E1E"
+        android:pathData="M63,70 L67,70 L67,74 L63,74 Z" />
+
+    <!-- Film frame background -->
+    <path
+        android:fillColor="#FF2A5F8F"
+        android:pathData="M34,26 L62,26 L62,82 L34,82 Z" />
+
+    <!-- Play triangle in the frame -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M42,40 L42,68 L58,54 Z" />
+
+    <!-- Streaming waves (right side) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M72,44 A10,10 0 0 1 72,64"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FF4CAF50" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M78,38 A18,18 0 0 1 78,70"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FF4CAF50" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M84,32 A26,26 0 0 1 84,76"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FF4CAF50" />
+
+</vector>

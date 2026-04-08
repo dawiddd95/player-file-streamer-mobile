@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- Video Player View -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:use_controller="false"
+        app:show_buffering="when_playing"
+        android:background="@color/black" />
+
+    <!-- Controls Overlay Panel -->
+    <LinearLayout
+        android:id="@+id/controlsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="@color/controls_bg"
+        android:padding="8dp">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/titleLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="4dp" />
+
+        <!-- File Counter + Audio button row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:id="@+id/fileCounterLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 / 0"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="start" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectAudio"
+                style="@style/PlayerButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/select_audio"
+                android:textSize="11sp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp" />
+        </LinearLayout>
+
+        <!-- Audio label -->
+        <TextView
+            android:id="@+id/audioLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/audio_none"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="4dp" />
+
+        <!-- Control Buttons Row -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingHorizontal="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPrev"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/prev"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPlayPause"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/pause"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNext"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/next"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFullscreen"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/window_mode"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLoop"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/loop_off"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRandom"
+                    style="@style/PlayerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:text="@string/random_off"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Status Label -->
+        <TextView
+            android:id="@+id/statusLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/buffering"
+            android:textColor="@color/text_status"
+            android:textSize="10sp"
+            android:gravity="center"
+            android:paddingTop="4dp" />
+
+    </LinearLayout>
+
+</FrameLayout>
+

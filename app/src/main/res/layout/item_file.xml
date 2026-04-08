@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="?attr/selectableItemBackground"
+    android:minHeight="48dp">
+
+    <!-- Icon -->
+    <TextView
+        android:id="@+id/iconLabel"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:text="📄" />
+
+    <!-- File name -->
+    <TextView
+        android:id="@+id/nameLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="filename.mp4"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:paddingHorizontal="8dp" />
+
+    <!-- File size -->
+    <TextView
+        android:id="@+id/sizeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+</LinearLayout>
+

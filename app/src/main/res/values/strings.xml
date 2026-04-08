@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Player File Streamer</string>
+
+    <!-- Launcher screen -->
+    <string name="choose_mode_title">Wybierz tryb odtwarzania:</string>
+    <string name="btn_standard">▶ Odtwarzacz standardowy\n(sortuje po nazwie: 1, 2, 10)</string>
+    <string name="btn_windows_sort">▶ Sortowanie jak w Windows\n(sortuje: 1, 10, 2)</string>
+    <string name="btn_muted">🔇 Wideo bez dźwięku\n(sortowanie jak w Windows)</string>
+    <string name="mode_standard">Tryb: Standardowy</string>
+    <string name="mode_windows">Tryb: Sortowanie Windows</string>
+    <string name="mode_muted">Tryb: Bez dźwięku</string>
+    <string name="streaming_muted">Streaming… (bez dźwięku)</string>
+
+    <!-- Main screen -->
+    <string name="url_hint">http://192.168.1.100:8080</string>
+    <string name="connect">🔗 Połącz</string>
+    <string name="go_back">⬆ Wróć</string>
+    <string name="play_all">▶ Odtwórz wszystko</string>
+    <string name="enter_server_url">Wpisz adres serwera i naciśnij Połącz</string>
+    <string name="enter_url">Wpisz adres URL serwera</string>
+    <string name="connecting">Łączenie z serwerem…</string>
+    <string name="loaded_format">Elementów: %1$d | Plików multimedialnych: %2$d</string>
+    <string name="error_format">Błąd: %1$s</string>
+    <string name="connection_error">Nie można połączyć z serwerem</string>
+    <string name="no_media_files">Brak plików multimedialnych</string>
+
+    <!-- Player -->
+    <string name="play">▶ Play</string>
+    <string name="pause">⏸ Pauza</string>
+    <string name="resume">▶ Wznów</string>
+    <string name="prev">⏮ Poprz.</string>
+    <string name="next">Nast. ⏭</string>
+    <string name="fullscreen">⛶ Pełny ekran</string>
+    <string name="window_mode">⛶ Okno</string>
+    <string name="loop_on">🔁 Pętla: ON</string>
+    <string name="loop_off">🔁 Pętla: OFF</string>
+    <string name="random_on">🔀 Losowo: ON</string>
+    <string name="random_off">🔀 Losowo: OFF</string>
+
+    <!-- Status -->
+    <string name="ready">Gotowy</string>
+    <string name="buffering">Buforowanie…</string>
+    <string name="streaming">Streaming…</string>
+    <string name="paused">Wstrzymano</string>
+    <string name="stream_ended">Zakończono</string>
+    <string name="stream_error_format">Błąd: %1$s</string>
+    <string name="playback_error">Błąd odtwarzania</string>
+    <string name="no_url">Brak adresu URL</string>
+    <string name="last_file">To ostatni plik</string>
+
+    <!-- Background music -->
+    <string name="select_audio">🎵 Muzyka w tle</string>
+    <string name="audio_none">Muzyka: Brak</string>
+    <string name="audio_format">Muzyka: %1$s</string>
+    <string name="start_countdown">Start za %1$ds…</string>
+
+    <!-- Common -->
+    <string name="file_counter_format">%1$d / %2$d</string>
+</resources>
+
