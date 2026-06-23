@@ -1,12 +1,15 @@
 package com.filestreaming.app
 
+import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,21 +22,24 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.google.android.material.button.MaterialButton
 
 /**
- * Odtwarzacz streamingowy — streamuje pliki wideo z serwera HTTP.
+ * Odtwarzacz streamingowy VR — streamuje pliki wideo z serwera HTTP.
+ *
+ * Wersja VR: okno/panel na goglach jest maksymalnie duże (cała szerokość
+ * i wysokość pola widzenia). Wideo skaluje się z zachowaniem proporcji
+ * (resize_mode="fit") — jak na ekranie kinowym w VR.
  *
  * Cechy:
  * - Streamuje bez pobierania na dysk (tylko bufor w RAM)
  * - Obsługuje przewijanie (Range requests)
  * - Obsługuje playlisty (wiele plików) z zarządzaniem pamięcią
- * - Pełny ekran z automatycznym ukrywaniem kontrolek
+ * - Pełny immersive mode (bez pasków systemowych)
  * - Zapętlanie / losowa kolejność
  * - Przejdź do następnego / poprzedniego pliku
  * - Muzyka w tle (drugi ExoPlayer) — wybór pliku audio z urządzenia
@@ -52,21 +58,21 @@ class StreamPlayerActivity : AppCompatActivity() {
         private const val PLAY_DELAY_SECONDS = 5
 
         // ---- Zarządzanie pamięcią (buffer) ----
-        private const val MIN_BUFFER_MS = 15_000        // 15s — minimum do buforowania
-        private const val MAX_BUFFER_MS = 60_000        // 60s — max bufor w przód (~30–180 MB)
-        private const val BUFFER_PLAYBACK_MS = 2_500     // 2.5s — wystarczy żeby zacząć odtwarzanie
-        private const val BUFFER_REBUFFER_MS = 5_000     // 5s — po rebufferze
+        // Wartości dostrojone pod Wi-Fi (sieć radiowa = jitter, nie kabel).
+        // Poprzednie MIN_BUFFER_MS=15s / BUFFER_PLAYBACK_MS=2.5s startowały
+        // odtwarzanie z bardzo małym zapasem — wystarczał chwilowy spadek
+        // przepustowości (retransmisja Wi-Fi, GC, obciążenie serwera), żeby
+        // bufor się wyczerpał szybciej niż zdążył dociągnąć dane, co dawało
+        // losowe ścinanie w trakcie odtwarzania mimo szybkiego łącza.
+        private const val MIN_BUFFER_MS = 30_000        // 30s — minimum do buforowania
+        private const val MAX_BUFFER_MS = 90_000        // 90s — max bufor w przód
+        private const val BUFFER_PLAYBACK_MS = 5_000     // 5s zapasu przed startem odtwarzania
+        private const val BUFFER_REBUFFER_MS = 8_000     // 8s zapasu po rebufferze, zanim ruszy dalej
         private const val BACK_BUFFER_MS = 10_000        // 10s — tył bufora, potem zwolnij RAM
 
         // ---- Sliding window (playlista) ----
         private const val WINDOW_AHEAD = 50              // Ładuj max 50 elementów w przód
         private const val WINDOW_BEHIND = 5              // Trzymaj 5 elementów w tył
-
-        // ---- HTTP (połączenie z serwerem) ----
-        private const val HTTP_CONNECT_TIMEOUT_MS = 15_000   // 15s na połączenie
-        private const val HTTP_READ_TIMEOUT_MS = 30_000      // 30s na odczyt danych
-        private const val ERROR_RETRY_DELAY_MS = 3000L       // 3s przerwy przed ponowieniem
-        private const val ERROR_MAX_RETRIES = 5              // max 5 prób automatycznego ponowienia
     }
 
     // --- Player ---
@@ -98,7 +104,6 @@ class StreamPlayerActivity : AppCompatActivity() {
     private var isFullscreen = false
     private var controlsVisible = true
     private var backgroundAudioUri: Uri? = null
-    private var errorRetryCount = 0
 
     private val hideHandler = Handler(Looper.getMainLooper())
     private val hideRunnable = Runnable { hideControls() }
@@ -119,6 +124,13 @@ class StreamPlayerActivity : AppCompatActivity() {
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // VR: nadpisz density w kontekście Activity (uzupełnia VrApp)
+        overrideActivityDensity()
+
+        // VR: tryb kina — immersive, ekran zawsze włączony, maksymalny panel
+        setupCinemaMode()
+
         setContentView(R.layout.activity_player)
 
         initViews()
@@ -127,6 +139,12 @@ class StreamPlayerActivity : AppCompatActivity() {
 
         // Załaduj playlistę z PlaylistHolder (BEZ auto-play)
         loadFromPlaylistHolder()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // VR: przywróć immersive mode (gogle mogą go zresetować)
+        enterFullscreen()
     }
 
     override fun onPause() {
@@ -145,10 +163,97 @@ class StreamPlayerActivity : AppCompatActivity() {
         PlaylistHolder.clear()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // VR: po zmianie konfiguracji (np. obrót) — ponownie nadpisz density
+        overrideActivityDensity()
+    }
+
+    // =========================================================================
+    // VR Cinema Mode
+    // =========================================================================
+
+    /**
+     * Nadpisuje density w kontekście Activity.
+     * Uzupełnia globalny override z VrApp — Activity ma własny Resources
+     * który trzeba osobno skonfigurować.
+     */
+    private fun overrideActivityDensity() {
+        val targetDpi = VrApp.VR_DENSITY_DPI
+        val density = targetDpi / 160f
+
+        resources.displayMetrics.apply {
+            densityDpi = targetDpi
+            this.density = density
+            scaledDensity = density
+        }
+        resources.configuration.densityDpi = targetDpi
+    }
+
+    /**
+     * Konfiguruje pełny tryb kina VR:
+     * - Ekran zawsze włączony (nie gaśnie w goglach)
+     * - Ukryj WSZYSTKO (status bar, navigation bar)
+     * - Rysuj pod wycięciami ekranu (notch/cutout)
+     * - Żądaj maksymalnego rozmiaru okna
+     */
+    @Suppress("DEPRECATION")
+    private fun setupCinemaMode() {
+        // Ekran zawsze włączony — nie gaśnie w VR
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // Pełny immersive mode — schowaj WSZYSTKO (status bar, navigation bar)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Display cutout — rysuj pod wycięciami ekranu (notch)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+
+        // VR: programowe żądanie maksymalnego rozmiaru okna/panelu
+        requestMaxWindowSize()
+    }
+
+    /**
+     * Programowo żąda maksymalnego rozmiaru okna.
+     * Na goglach Meta Quest to ustawia panel 2D na największy możliwy rozmiar.
+     */
+    @Suppress("DEPRECATION")
+    private fun requestMaxWindowSize() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ (API 30)
+            window.setDecorFitsSystemWindows(false)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+
+            // Rozciągnij okno na CAŁY dostępny ekran, nawet poza system bars
+            window.setAttributes(window.attributes.apply {
+                width = WindowManager.LayoutParams.MATCH_PARENT
+                height = WindowManager.LayoutParams.MATCH_PARENT
+                flags = flags or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+            })
+        } else {
+            // Starsze API — użyj system UI flags
+            window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    )
+        }
+    }
+
     // =========================================================================
     // Init
     // =========================================================================
 
+    @OptIn(UnstableApi::class)
     private fun initViews() {
         playerView = findViewById(R.id.playerView)
         controlsPanel = findViewById(R.id.controlsPanel)
@@ -164,6 +269,9 @@ class StreamPlayerActivity : AppCompatActivity() {
         btnRandom = findViewById(R.id.btnRandom)
         btnSelectAudio = findViewById(R.id.btnSelectAudio)
 
+        // VR Cinema: wideo dopasowuje się do rozmiaru okna, zachowując proporcje
+        playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+
         btnPlayPause.setOnClickListener { togglePlayPause() }
         btnPrev.setOnClickListener { playPrevious() }
         btnNext.setOnClickListener { playNext() }
@@ -175,16 +283,6 @@ class StreamPlayerActivity : AppCompatActivity() {
 
     @OptIn(UnstableApi::class)
     private fun initPlayer() {
-        // ── HTTP: timeouty i keep-alive dla stabilnego połączenia ──
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-            .setConnectTimeoutMs(HTTP_CONNECT_TIMEOUT_MS)
-            .setReadTimeoutMs(HTTP_READ_TIMEOUT_MS)
-            .setAllowCrossProtocolRedirects(true)
-            .setKeepPostFor302Redirects(true)
-
-        val mediaSourceFactory = DefaultMediaSourceFactory(this)
-            .setDataSourceFactory(httpDataSourceFactory)
-
         // ── Ograniczenie buforowania — oszczędność RAM ──
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
@@ -193,12 +291,20 @@ class StreamPlayerActivity : AppCompatActivity() {
                 BUFFER_PLAYBACK_MS,
                 BUFFER_REBUFFER_MS
             )
-            .setBackBuffer(BACK_BUFFER_MS, false)
+            .setBackBuffer(BACK_BUFFER_MS, false)  // Zwolnij dane po 10s za kursorem
+            // KRYTYCZNE dla wideo VR (duża rozdzielczość = duży bitrate):
+            // Domyślny DefaultLoadControl ma też limit bufora WG ROZMIARU (bajtów),
+            // nie tylko wg czasu. Przy wysokim bitrate plik VR mógł trafiać w ten
+            // limit rozmiaru i przestawać buforować na długo PRZED osiągnięciem
+            // MAX_BUFFER_MS w czasie — co dawało wyczerpanie bufora i zacięcie,
+            // mimo że łącze (140 Mb/s) miało zapas przepustowości.
+            // prioritizeTimeOverSizeThresholds=true każe LoadControl trzymać się
+            // wyłącznie progów czasowych zdefiniowanych wyżej.
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
         player = ExoPlayer.Builder(this)
             .setLoadControl(loadControl)
-            .setMediaSourceFactory(mediaSourceFactory)
             .build()
 
         playerView.player = player
@@ -212,7 +318,6 @@ class StreamPlayerActivity : AppCompatActivity() {
                         showControls()
                     }
                     Player.STATE_READY -> {
-                        errorRetryCount = 0
                         if (player.isPlaying) {
                             statusLabel.text = if (isMuted) getString(R.string.streaming_muted)
                                                 else getString(R.string.streaming)
@@ -242,31 +347,20 @@ class StreamPlayerActivity : AppCompatActivity() {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                // ── Zarządzanie sliding window ──
                 managePlaylistWindow()
                 updateFileCounter()
                 updateTitle()
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                if (errorRetryCount < ERROR_MAX_RETRIES) {
-                    errorRetryCount++
-                    statusLabel.text = "Błąd połączenia — ponowienie $errorRetryCount/$ERROR_MAX_RETRIES…"
-                    playHandler.postDelayed({
-                        val pos = player.currentPosition
-                        player.prepare()
-                        player.seekTo(player.currentMediaItemIndex, pos)
-                        player.play()
-                    }, ERROR_RETRY_DELAY_MS)
-                } else {
-                    statusLabel.text = getString(R.string.stream_error_format, error.message ?: "?")
-                    showControls()
-                    Toast.makeText(
-                        this@StreamPlayerActivity,
-                        getString(R.string.playback_error),
-                        Toast.LENGTH_LONG
-                    ).show()
-                    errorRetryCount = 0
-                }
+                statusLabel.text = getString(R.string.stream_error_format, error.message ?: "?")
+                showControls()
+                Toast.makeText(
+                    this@StreamPlayerActivity,
+                    getString(R.string.playback_error),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
@@ -556,15 +650,34 @@ class StreamPlayerActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Fullscreen
+    // Fullscreen — VR enhanced
     // =========================================================================
 
+    /**
+     * Wchodzi w pełny immersive mode.
+     * Na goglach VR: ukrywa WSZYSTKIE paski systemowe i rozciąga okno.
+     */
+    @Suppress("DEPRECATION")
     private fun enterFullscreen() {
         isFullscreen = true
+
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.hide(WindowInsetsCompat.Type.systemBars())
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        // VR: dodatkowe flagi immersive (dla starszych API i gogli)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    )
+        }
+
         btnFullscreen.text = getString(R.string.window_mode)
     }
 
